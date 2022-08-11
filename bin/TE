@@ -1,0 +1,18 @@
+#!/bin/bash
+
+BUFFER=0
+
+if [ "$#" -eq 2 ]; then
+    BUFFER=$2
+fi
+
+gdalinfo $1 | python -c "
+import re,sys
+te = re.findall('((Lower Left)|(Upper Right))\s+\(\s+([\d\.]*),\s+([\d\.]+)\)', sys.stdin.read())
+xmin = float(te[0][-2]) - ${BUFFER}
+ymin = float(te[0][-1]) - ${BUFFER}
+xmax = float(te[1][-2]) + ${BUFFER}
+ymax = float(te[1][-1]) + ${BUFFER}
+
+print(f'{xmin:0.3f} {ymin:0.3f} {xmax:0.3f} {ymax:0.3f}')
+"
