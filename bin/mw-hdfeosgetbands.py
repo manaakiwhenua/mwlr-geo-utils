@@ -8,10 +8,10 @@ Prints space-delimted:
 
 Used to create input for 'gdalbuildvrt -separate', or 'setBandDescr.py'
 
-Usage example:
-    gdalbuildvrt -separate MYD11A1.A2022002.h14v16.061.vrt $( gdalinfo MYD11A1.A2022002.h14v16.061.hdf | filter_hdfeosbands.py )
+Usage:
+    gdalbuildvrt -separate MYD11A1.A2022002.h14v16.061.vrt $( gdalinfo MYD11A1.A2022002.h14v16.061.hdf | mw-hdfeosgetbands.py )
     THEN
-    setBandDescr.py MYD11A1.A2022002.h14v16.061.vrt -d $( gdalinfo MYD11A1.A2022002.h14v16.061.hdf | filter_hdfeosbands.py --bandnames )
+    mw-setbanddescr.py MYD11A1.A2022002.h14v16.061.vrt -d $( gdalinfo MYD11A1.A2022002.h14v16.061.hdf | mw-hdfeosgetbands.py --bandnames )
 """
 
 import sys, re
