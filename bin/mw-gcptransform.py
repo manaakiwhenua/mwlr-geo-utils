@@ -25,7 +25,7 @@ def str_to_SRS(srs_str):
 
 def transform_all_GCPs(raster, src_srs, tgt_srs):
     """ Read all GCPs from raster, transform them, the write them back"""
-    ds = gdal.Open(raster)
+    ds = gdal.Open(raster, gdal.GA_Update)
     transform = osr.CoordinateTransformation(src_srs, tgt_srs)
     gcps = [transform_GCP(gcp, transform) for gcp in ds.GetGCPs()]
     ds.SetGCPs(gcps, tgt_srs)
