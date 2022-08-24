@@ -6,12 +6,12 @@ Optionally buffer it (with -tap option)
 
 Optionally write result to an OGR vector file
 
-usage:
-mw-extent.py ~/nz_sen2_arefs_1920_100m.kea
-
-OR (create KML)
-mw-extent.py ~/nz_sen2_arefs_1920_100m.kea --output ~/nz_sen2_arefs_1920_100m.kml -of KML --epsg 4326
+Usage:
+    mw-extent.py ~/nz_sen2_arefs_1920_100m.kea
+    OR (create KML)
+    mw-extent.py ~/nz_sen2_arefs_1920_100m.kea --output ~/nz_sen2_arefs_1920_100m.kml -of KML --epsg 4326
 """
+# Author: Ben Jolly
 
 import argparse
 import math

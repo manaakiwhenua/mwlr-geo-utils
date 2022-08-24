@@ -1,11 +1,12 @@
 #!/usr/bin/env python
-"""
-Set band descriptions in gdal image file and optionally calculate stats and pyrimids
+"""Set band descriptions in gdal image file and optionally calculate stats and pyrimids
 
-usage: setBandDescr.py [-h] [-s] [-i ignore] [-p] file.vrt [file.vrt ...] [-d B01 [B02 ...]]
+Usage: 
+    mw-setbanddescr.py [-h] [-s] [-i ignore] [-p] file.vrt [file.vrt ...] [-d B01 [B02 ...]]
 
 Author:   D.Pairman  21 Jul 2016
 """
+# Author: David Pairman
 
 from osgeo import gdal, ogr
 from osgeo.gdalconst import *
