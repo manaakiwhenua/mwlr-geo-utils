@@ -6,6 +6,7 @@ Usage:
 
 Author:   D.Pairman  21 Jul 2016
 """
+# Author: David Pairman
 
 from osgeo import gdal, ogr
 from osgeo.gdalconst import *

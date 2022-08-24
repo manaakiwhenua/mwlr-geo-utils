@@ -11,6 +11,7 @@ Usage:
     OR (create KML)
     mw-extent.py ~/nz_sen2_arefs_1920_100m.kea --output ~/nz_sen2_arefs_1920_100m.kml -of KML --epsg 4326
 """
+# Author: Ben Jolly
 
 import argparse
 import math

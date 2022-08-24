@@ -9,6 +9,8 @@ Usage:
     OR
     mw-gdalvalidate.py --delete /path/to/*.kea
 """
+# Author: Ben Jolly
+
 import sys
 from osgeo import gdal
 from pathlib import Path

@@ -1,4 +1,7 @@
 #!/usr/bin/env python
+"""Calculate 'Zonal Stats' from a raster for polygons in a given vector
+"""
+# Author: Jan Schindler
 
 import argparse
 

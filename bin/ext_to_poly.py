@@ -1,8 +1,8 @@
 #!/usr/bin/env python
 """Create a polygon from image file extents
 
-Written by James Shepherd
 """
+# Author: James Shepherd
 
 import os, re
 from osgeo import ogr

@@ -1,5 +1,7 @@
 #!/usr/bin/env python
-""" Transform all GCPS in a raster to a different SRS (ie EPSG 4326 -> EPSG 3031)"""
+"""Transform all GCPS in a raster to a different SRS (ie EPSG 4326 -> EPSG 3031)
+"""
+# Author: Ben Jolly
 
 import shutil
 from osgeo import gdal, osr
@@ -11,7 +13,7 @@ def transform_GCP(gcp, transform):
     return gdal.GCP(x, y, z, gcp.GCPPixel, gcp.GCPLine)
 
 def str_to_SRS(srs_str):
-    """ Convert a Proj4 or WKT string, or EPSG code, into an osgeo.osr.SpatialReference """
+    """Convert a Proj4 or WKT string, or EPSG code, into an osgeo.osr.SpatialReference """
     srs = osr.SpatialReference()
 
     if '+proj' in srs_str.lower():
@@ -24,7 +26,7 @@ def str_to_SRS(srs_str):
     return srs
 
 def transform_all_GCPs(raster, src_srs, tgt_srs):
-    """ Read all GCPs from raster, transform them, the write them back"""
+    """Read all GCPs from raster, transform them, the write them back"""
     ds = gdal.Open(raster, gdal.GA_Update)
     transform = osr.CoordinateTransformation(src_srs, tgt_srs)
     gcps = [transform_GCP(gcp, transform) for gcp in ds.GetGCPs()]

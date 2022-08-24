@@ -1,5 +1,7 @@
 #!/bin/bash
 
+# Author: Ben Jolly
+
 if [[ $# -ne 4 ]]; then
     echo ""
     echo "Change the bands of a GDAL VRT file, useful after building a VRT with "

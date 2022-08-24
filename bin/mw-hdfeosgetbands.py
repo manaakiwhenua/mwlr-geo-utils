@@ -13,6 +13,7 @@ Usage:
     THEN
     mw-setbanddescr.py MYD11A1.A2022002.h14v16.061.vrt -d $( gdalinfo MYD11A1.A2022002.h14v16.061.hdf | mw-hdfeosgetbands.py --bandnames )
 """
+# Author: Ben Jolly
 
 import sys, re
 import argparse
