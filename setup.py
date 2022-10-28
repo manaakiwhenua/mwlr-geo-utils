@@ -2,7 +2,7 @@
 
 from distutils.core import setup
 
-setup(name='MWLR-Geo-Utils',
+setup(name='mwlr-geo-utils',
       version='1.0',
       description='Helpful utilities for working with geospatial data',
       author='Ben Jolly',
@@ -15,7 +15,7 @@ setup(name='MWLR-Geo-Utils',
         'bin/mw-hdfeosgetbands.py',
         #'bin/mw-merge.py',
         'bin/mw-rasterstats.py',
-        #'bin/mw-rioscalc.py',
+        'bin/mw-rioscalc.py',
         'bin/mw-setbanddescr.py',
         'bin/mw-setvrtband.sh',
         ],
