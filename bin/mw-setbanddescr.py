@@ -62,6 +62,8 @@ if __name__ == "__main__":
                         help="input gdal image file")
     parser.add_argument("-f", "--fromImage", type=str, default=None,
                         help="Copy band names from this file")
+    parser.add_argument("-b", "--bandsFromImage", nargs='*', type=int, default=[],
+                        help="Only copy THESE band names from file")
     parser.add_argument("-d", "--description", nargs='*', type=str, default=[],
                         help="Band description(s) (in order)")
     parser.add_argument("-s", "--stats", help="calculate statistics", action="store_true")
@@ -72,7 +74,12 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     if args.fromImage is not None:
-        args.description = getBandDescr(args.fromImage)
+        description = getBandDescr(args.fromImage)
+
+        if len(args.bandsFromImage) > 0:
+           args.description = [ description[i-1] for i in args.bandsFromImage ]
+        else:
+           args.description = description
 
     for img in args.inputImage:
       setBandDescr(img,
