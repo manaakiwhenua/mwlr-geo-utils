@@ -17,7 +17,7 @@ from rasterio.transform import from_origin
 from rasterio import windows
 
 
-def np_stats(data, metric):
+def np_stats(data: np.ndarray, metric: str) -> np.ndarray:
     results = []
     if data.ndim == 1:
         axis = 0
@@ -131,4 +131,4 @@ if __name__ == "__main__":
         ignore=args.ignore
     )
 
-# python rasterstats.py /nesi/project/landcare03178/data/experiments/trees-wairarapa/model_detectron2/prediction_gwrc_RGB_2021_wairarapa_2.gpkg /nesi/project/landcare03178/data/experiments/wairarapa-species/model_smp_unet64_f1_jaccard/prediction_gwrc_RGBI_2021_wairarapa_2.kea /nesi/project/landcare03178/data/experiments/trees-wairarapa/model_detectron2/prediction_gwrc_RGB_2021_wairarapa_2_species.gpkg --metrics mode --bands 1 --bandnames CLASS --buffer 0
+# python rasterstats.py /nesi/project/landcare03178/data/experiments/trees-wairarapa/model_detectron2/prediction_gwrc_RGB_2021_wairarapa_2.gpkg /nesi/project/landcare03178/data/experiments/wairarapa-species/model_smp_unet64_f1_jaccard/prediction_gwrc_RGBI_2021_wairarapa_2.kea /nesi/project/landcare03178/data/experiments/trees-wairarapa/model_detectron2/prediction_gwrc_RGB_2021_wairarapa_2_species.gpkg --metrics mode --bands 1 --bandnames CLASS --buffer 0  

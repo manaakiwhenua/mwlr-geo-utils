@@ -21,7 +21,7 @@ import math
 https://gis.stackexchange.com/questions/57834/how-to-get-raster-corner-coordinates-using-python-gdal-bindings
 """
 from osgeo import gdal,ogr,osr
-def GetExtent(images, buffer=0, tap=False, epsg=None):
+def GetExtent(images, buffer=0, tap=False, epsg=None, tap_size=None):
     """ Return list of corner coordinates from a gdal Dataset (ul ur lr ll) """
 
     if epsg is None:
@@ -47,7 +47,11 @@ def GetExtent(images, buffer=0, tap=False, epsg=None):
             xmin, ymin, xmax, ymax = xmin - buffer, ymin - buffer, xmax + buffer, ymax + buffer
 
         if tap:
-            x_abs, y_abs = abs(xpixel), abs(ypixel)
+            if tap_size is None:
+                x_abs, y_abs = abs(xpixel), abs(ypixel)
+            else:
+                x_abs, y_abs = tap_size, tap_size
+
             xmin = math.floor(xmin / x_abs) * x_abs
             ymin = math.floor(ymin / y_abs) * y_abs
             xmax = math.ceil(xmax / x_abs) * x_abs
@@ -119,10 +123,11 @@ if __name__ == "__main__":
     parser.add_argument("-of", default="GML", help="Format of --output [default GML]")
     parser.add_argument("--epsg", type=int, default=None, help="EPSG code for output [default: same as input]")
     parser.add_argument("-tap", action='store_true', help="Target align pixels (make sure extent snaps to pixel size of raster)")
+    parser.add_argument("--tap_size", type=float, help="Pixel size to use for -tap")
     args = parser.parse_args()
 
     #NOTE: corners format is [ul ur lr ll] OR [(xmin, ymax), (xmax, ymax), (xmax, ymin), (xmin, ymin)]
-    extents, srs = GetExtent(args.images, buffer=args.buffer, tap=args.tap, epsg=args.epsg)
+    extents, srs = GetExtent(args.images, buffer=args.buffer, tap=args.tap, epsg=args.epsg, tap_size=args.tap_size)
 
     if args.output is not None:
         create_vector(extents, srs, args.output, args.of, "mw-extent", [image.split('/')[-1] for image in args.images])
