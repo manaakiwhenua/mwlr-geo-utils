@@ -66,9 +66,15 @@ def calc_stats(rio_image, df_row, bands, metrics, buffer, ignore):
         height=geom_mask.shape[0])).astype(np.float32)
     data = data[np.array(bands) - 1]
     
-    data[geom_mask & (data != rio_image.nodata)] = np.nan
-    for val in ignore:
-        data[data == val] = np.nan
+    if data.size == 0:
+        print('WARN: Geometry outside image bounds!')
+        data = np.zeros((len(bands), ) + geom_mask.shape, dtype=float)
+        data[:] = np.nan
+    else:
+        data[geom_mask & (data != rio_image.nodata)] = np.nan
+        for val in ignore:
+            data[data == val] = np.nan
+
     results = np_stats(data, metrics)
     
     # import matplotlib.pyplot as plt
