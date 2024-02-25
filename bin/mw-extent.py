@@ -21,6 +21,8 @@ import math
 https://gis.stackexchange.com/questions/57834/how-to-get-raster-corner-coordinates-using-python-gdal-bindings
 """
 from osgeo import gdal,ogr,osr
+gdal.UseExceptions()
+
 def GetExtent(images, buffer=0, tap=False, epsg=None, tap_size=None):
     """ Return list of corner coordinates from a gdal Dataset (ul ur lr ll) """
 
