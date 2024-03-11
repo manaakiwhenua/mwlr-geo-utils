@@ -27,7 +27,7 @@ def np_stats(data: np.ndarray, metric: str) -> np.ndarray:
         axis = (1, 2)
 
     for metric in metric:
-        if metric in ['mean', 'std', 'median', 'var']:
+        if metric in ['mean', 'std', 'median', 'var', 'sum']:
             result = getattr(np, f'nan{metric}')(data, axis=axis)
         elif 'mode' in metric:
             result = stats.mode(data.ravel())[0]
@@ -66,9 +66,15 @@ def calc_stats(rio_image, df_row, bands, metrics, buffer, ignore):
         height=geom_mask.shape[0])).astype(np.float32)
     data = data[np.array(bands) - 1]
     
-    data[geom_mask & (data != rio_image.nodata)] = np.nan
-    for val in ignore:
-        data[data == val] = np.nan
+    if data.size == 0:
+        print('WARN: Geometry outside image bounds!')
+        data = np.zeros((len(bands), ) + geom_mask.shape, dtype=float)
+        data[:] = np.nan
+    else:
+        data[geom_mask & (data != rio_image.nodata)] = np.nan
+        for val in ignore:
+            data[data == val] = np.nan
+
     results = np_stats(data, metrics)
     
     # import matplotlib.pyplot as plt
@@ -86,7 +92,8 @@ def calculate_raster_stats(inputvector, raster, outputvector, metrics, prefix,
     gdf = gpd.read_file(inputvector)
     rio_image = rio.open(raster, 'r')
 
-    column_names = [f"{prefix}{b}{stat}" for stat in metrics for b in bandnames]
+    
+    column_names = [(f"{prefix[i]}_" if len(prefix[i]) > 0 else '') + b + ('_' if len(bandnames) > 0 else '') + stat for stat in metrics for i, b in enumerate(bandnames)]
     # calc_stats(rio_image, gdf.iloc[0], bands, stats)
 
     for i, row in tqdm(gdf.iterrows(), total=len(gdf)):
@@ -117,6 +124,21 @@ if __name__ == "__main__":
     parser.add_argument("--ignore", nargs='*', type=float, default=[0.], 
         help="Values to ignore during metric calculation")
     args = parser.parse_args()
+
+    if len(args.bands) > 1:
+        if len(args.prefix) == 1:
+            args.prefix *= len(args.bands)
+        
+        if len(args.bandnames) == 1:
+            args.bandnames = [f"b{band:02d}" for band in args.bands]
+
+        if len(args.prefix) == 1:
+            args.prefix *= len(args.bands)
+        elif len(args.prefix) != len(args.bands):
+            raise Exception("--prefix should either be 1 arg or the same length as --bands")
+        
+    assert len(args.bandnames) == len(args.bands), "--bandnames should either be 1 arg or the same length as --bands"
+    assert len(args.prefix) == len(args.bands), "--prefix should either be 1 arg or the same length as --bands"
 
     calculate_raster_stats(
         args.inputvector, 
