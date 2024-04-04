@@ -60,7 +60,7 @@ print('OUT - OUTPUT:', outfiles.indices)
 
 def apply(info, ins, outs, others):
 
-    outs.output = np.zeros((13, ) + ins.raster1.shape[1:], dtype=float)
+    outs.output = np.zeros_like(ins.raster1, dtype=float)
 
     valid = np.ones_like((1,) + ins.raster1.shape[1:], dtype=bool)
 
