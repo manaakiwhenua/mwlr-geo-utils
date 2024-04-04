@@ -27,7 +27,7 @@ otherargs = applier.OtherInputs()
 controls.drivername = 'KEA'
 controls.calcStats = True
 controls.progress = cuiprogress.GDALProgressBar()
-controls.referenceImage = args.image.as_posix()
+controls.referenceImage = args.raster1.as_posix()
 #controls.layernames = ["Red", "Green", "Blue"]
 controls.statsIgnore = np.nan
 
