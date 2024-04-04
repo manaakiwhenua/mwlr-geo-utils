@@ -67,9 +67,10 @@ def apply(info, ins, outs, others):
     if others.mask:
         valid *= ins.mask == 1
     
-    if otherargs.cloud:
+    if others.cloud:
         valid *= ins.cloud == 1
 
+    # this step here can massively speed things up (if entire tile is outside aoi/cloudy then set output to nodata and keep going)
     if not valid.any():
         outs.output[:] = np.nan
         return
