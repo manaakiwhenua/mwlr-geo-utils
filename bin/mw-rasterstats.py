@@ -27,7 +27,7 @@ def np_stats(data: np.ndarray, metric: str) -> np.ndarray:
         axis = (1, 2)
 
     for metric in metric:
-        if metric in ['mean', 'std', 'median', 'var', 'sum']:
+        if metric in ['mean', 'std', 'median', 'var', 'sum', 'max', 'min']:
             result = getattr(np, f'nan{metric}')(data, axis=axis)
         elif 'mode' in metric:
             result = stats.mode(data.ravel())[0]
@@ -46,34 +46,44 @@ def calc_stats(rio_image, df_row, bands, metrics, buffer, ignore):
     geom = df_row.geometry
     if buffer:
         geom = geom.buffer(buffer)
-    res = rio_image.res[0]
-    xmin, ymin, xmax, ymax = geom.bounds
-    row_offset = np.floor((rio_image.bounds.top - ymax) / res).astype(int)
-    col_offset = np.floor((xmin - rio_image.bounds.left) / res).astype(int)
-    height = (np.ceil((rio_image.bounds.top - ymin) / res) - row_offset).astype(int)
-    width  = (np.ceil((xmax - rio_image.bounds.left) / res) - col_offset).astype(int)
-
-    adj_ymax = rio_image.bounds.top - (res * np.floor((rio_image.bounds.top - ymax) / res))
-    adj_xmin = rio_image.bounds.left + (res * np.floor((xmin - rio_image.bounds.left) / res))
-
-    geom_mask = features.geometry_mask(
-        geometries=[geom], out_shape=(height, width),
-        transform=from_origin(adj_xmin, adj_ymax, res, res), all_touched=True
-    )
-
-    data = rio_image.read(window=windows.Window(col_off=col_offset, 
-        row_off=row_offset, width=geom_mask.shape[1], 
-        height=geom_mask.shape[0])).astype(np.float32)
-    data = data[np.array(bands) - 1]
     
-    if data.size == 0:
-        print('WARN: Geometry outside image bounds!')
-        data = np.zeros((len(bands), ) + geom_mask.shape, dtype=float)
-        data[:] = np.nan
+    if np.isnan(geom.bounds).any():
+        print('WARN: Empty/invalid geometry')
+        data = np.zeros((1,1), dtype=float) * np.nan
     else:
-        data[geom_mask & (data != rio_image.nodata)] = np.nan
-        for val in ignore:
-            data[data == val] = np.nan
+        res = rio_image.res[0]
+        xmin, ymin, xmax, ymax = geom.bounds
+        row_offset = np.floor((rio_image.bounds.top - ymax) / res).astype(int)
+        col_offset = np.floor((xmin - rio_image.bounds.left) / res).astype(int)
+        height = (np.ceil((rio_image.bounds.top - ymin) / res) - row_offset).astype(int)
+        width  = (np.ceil((xmax - rio_image.bounds.left) / res) - col_offset).astype(int)
+
+        adj_ymax = rio_image.bounds.top - (res * np.floor((rio_image.bounds.top - ymax) / res))
+        adj_xmin = rio_image.bounds.left + (res * np.floor((xmin - rio_image.bounds.left) / res))        
+
+        geom_mask = features.geometry_mask(
+            geometries=[geom], out_shape=(height, width),
+            transform=from_origin(adj_xmin, adj_ymax, res, res), all_touched=True
+        )
+
+        data = rio_image.read(window=windows.Window(col_off=col_offset, 
+            row_off=row_offset, width=geom_mask.shape[1], 
+            height=geom_mask.shape[0])).astype(np.float32)
+        data = data[np.array(bands) - 1]
+        
+        if data.size == 0:
+            print('WARN: Geometry outside image bounds!')
+            data = np.zeros((len(bands), ) + geom_mask.shape, dtype=float)
+            data[:] = np.nan
+        elif data.shape[1:] != geom_mask.shape:
+            print('WARN: Geometry mismatch, possibly partly outside image bounds!')
+            data = np.zeros((len(bands), ) + geom_mask.shape, dtype=float)
+            data[:] = np.nan
+        else:
+            data[geom_mask & (data != rio_image.nodata)] = np.nan
+
+            for val in ignore:
+                data[data == val] = np.nan
 
     results = np_stats(data, metrics)
     
