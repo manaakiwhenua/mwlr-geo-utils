@@ -17,8 +17,9 @@ from rios import calcstats, cuiprogress
 gdal.PushErrorHandler('CPLQuietErrorHandler')
 ogr.UseExceptions()
 
-def getBandDescr(imgName):
-    print('Reading bands from', imgName)
+def getBandDescr(imgName, suppressprint=False):
+    if not suppressprint:
+       print('Reading bands from', imgName)
     bandNames = []
     imgFile = gdal.Open(imgName, gdal.GA_ReadOnly)
     for ibnd in range(imgFile.RasterCount):
@@ -70,7 +71,9 @@ if __name__ == "__main__":
     parser.add_argument("-i", "--ignore", type=int, nargs='?', const=None, default=0,
                         help="ignore value for stats (def=0, -i alone for None)")
     parser.add_argument("-p", "--pyramids", help="calculate pyramid layers", action="store_true")
-
+    parser.add_argument("--read", action='store_true', help="read and print band names to stdout")
+    parser.add_argument("--readnumbers", action='store_true', help="read and print band numbers to stdout")
+    
     args = parser.parse_args()
 
     if args.fromImage is not None:
@@ -81,9 +84,20 @@ if __name__ == "__main__":
         else:
            args.description = description
 
-    for img in args.inputImage:
-      setBandDescr(img,
-                   descr = args.description,
-                   stats = args.stats,
-                   ignore = args.ignore,
-                   pyramids = args.pyramids)
+    if args.read or args.readnumbers:
+      bands = []
+
+      for img in args.inputImage:
+        bands += getBandDescr(img, suppressprint=True)
+
+      if args.readnumbers:
+        print(' '.join([str(i) for i in range(1,len(bands)+1)]))
+      else:
+        print(' '.join(bands))
+    else:
+      for img in args.inputImage:
+        setBandDescr(img,
+                    descr = args.description,
+                    stats = args.stats,
+                    ignore = args.ignore,
+                    pyramids = args.pyramids)
