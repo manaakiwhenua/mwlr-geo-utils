@@ -3,7 +3,7 @@
 from distutils.core import setup
 
 setup(name='mwlr-geo-utils',
-      version='1.1',
+      version='1.2',
       description='Helpful utilities for working with geospatial data',
       author='Ben Jolly',
       author_email='bhjolly@gmail.com',
