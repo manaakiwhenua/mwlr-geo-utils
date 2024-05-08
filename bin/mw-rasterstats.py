@@ -35,9 +35,12 @@ def np_stats(data: np.ndarray, metric: str) -> np.ndarray:
             result = np.nanpercentile(data, int(metric.replace('perc', '')), axis=axis)
         elif 'quant' in metric:
             result = np.nanquantile(data, int(metric.replace('perc', '')), axis=axis)
+        elif metric == 'count':
+            result = (~np.isnan(data)).sum(axis=axis)
         else:
             raise Exception(f'Metric {metric} not defined.')
         results.append(result)
+        #print(result.shape)
     return np.concatenate(results)
 
 
@@ -49,7 +52,8 @@ def calc_stats(rio_image, df_row, bands, metrics, buffer, ignore):
     
     if np.isnan(geom.bounds).any():
         print('WARN: Empty/invalid geometry')
-        data = np.zeros((1,1), dtype=float) * np.nan
+        data = np.zeros((len(bands), 1, 1), dtype=float)
+        data[:] = np.nan
     else:
         res = rio_image.res[0]
         xmin, ymin, xmax, ymax = geom.bounds
