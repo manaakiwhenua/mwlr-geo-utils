@@ -32,6 +32,10 @@ parser.add_argument('-of', type=str, default='KEA')
 parser.add_argument('--nostats', action='store_true', help='Do NOT calculate pyramids/stats')
 parser.add_argument('--dstnodata', type=str, help="Destination NODATA value (either a number or 'np.nan'")
 parser.add_argument('--bandnames', nargs='+', default=None)
+parser.add_argument('--copybandnames', action='store_true', default=False)
+parser.add_argument('--referenceimage', type=Path, default=None)
+parser.add_argument('--footprint', type=str, default='UNION', help="controls.footprint setting - choose UNION (default), INTERSECTION, or BOUNDS_FROM_REFERENCE")
+parser.add_argument('--windowsize', type=int, default=512, help='')
 args = parser.parse_args()
 
 # rios
@@ -47,12 +51,24 @@ controls.drivername = args.of
 controls.calcStats = not args.nostats
 controls.progress = cuiprogress.GDALProgressBar()
 if args.bandnames is not None:
+    assert not args.copybandnames
     controls.layernames = args.bandnames # ['LST_Day_1km', 'LST_Night_1km']
 
 if args.dstnodata is not None:
     controls.statsignore = int(args.dstnodata) if '.' not in args.dstnodata else np.nan if args.dstnodata == "np.nan" else float(args.dstnodata)
 else:
     controls.statsignore = finfo.nodataval
+
+if args.referenceimage is not None:
+    assert args.referenceimage.exists()
+    controls.referenceImage = args.referenceimage.as_posix()
+
+if args.copybandnames and len(args.rasters) > 1:
+    print("""WARNING: --copybandnames is set but you have more than 1 input raster,
+    defaulting to the band names of the first one""")
+
+controls.footprint = getattr(applier, args.footprint, None)
+controls.windowxsize, controls.windowysize = args.windowsize, args.windowsize
 print("WINSIZE", controls.windowxsize, controls.windowysize)
 
 # rios files
@@ -74,5 +90,18 @@ def apply(info, ins, outs, others):
 
 # rios execute
 applier.apply(apply, infiles, outfiles, otherargs, controls=controls)
+
+if args.copybandnames:
+    from osgeo import gdal
+    src_ds = gdal.Open(args.rasters[0].as_posix())
+    dst_ds = gdal.Open(args.result.as_posix(), gdal.GA_Update)
+
+    for i in range(1, src_ds.RasterCount + 1):
+        src_band = src_ds.GetRasterBand(i)
+        dst_band = dst_ds.GetRasterBand(i)
+        dst_band.SetDescription(src_band.GetDescription())
+
+    src_ds = None
+    dst_ds = None
 
 print("Done")
