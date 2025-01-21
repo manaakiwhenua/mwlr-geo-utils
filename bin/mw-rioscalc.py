@@ -16,6 +16,13 @@ import re
 from pathlib import Path
 import numpy as np
 from rios import applier, cuiprogress, fileinfo
+import importlib.util
+
+def import_module_from_file(file_path):
+    spec = importlib.util.spec_from_file_location("dynamic_module", file_path)
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    return module
 
 np.seterr(invalid='ignore')
 
@@ -36,6 +43,7 @@ parser.add_argument('--copybandnames', action='store_true', default=False)
 parser.add_argument('--referenceimage', type=Path, default=None)
 parser.add_argument('--footprint', type=str, default='UNION', help="controls.footprint setting - choose UNION (default), INTERSECTION, or BOUNDS_FROM_REFERENCE")
 parser.add_argument('--windowsize', type=int, default=512, help='')
+parser.add_argument('--calcfile', type=Path, default=None, help='Path to a Python file to import, must contain an apply function, not compatible with --calc')
 args = parser.parse_args()
 
 # rios
@@ -81,6 +89,12 @@ otherargs.formula = args.calc
 otherargs.calcmask = args.calcmask
 otherargs.nodata = controls.statsignore
 
+if args.calcfile is not None:
+    assert args.calcfile.exists()
+    calcfile = import_module_from_file(args.calcfile.as_posix())
+else:
+    calcfile = None
+    
 # rios apply function
 def apply(info, ins, outs, others):
     outs.result = eval(others.formula, {"rasters": ins.rasters, "np": np})
@@ -88,8 +102,8 @@ def apply(info, ins, outs, others):
     if others.calcmask is not None:
         outs.result[eval(others.calcmask, {"rasters": ins.rasters, "np": np, "result": outs.result})] = others.nodata
 
-# rios execute
-applier.apply(apply, infiles, outfiles, otherargs, controls=controls)
+# rios execute 
+applier.apply(apply if calcfile is None else calcfile.apply, infiles, outfiles, otherargs, controls=controls)
 
 if args.copybandnames:
     from osgeo import gdal
