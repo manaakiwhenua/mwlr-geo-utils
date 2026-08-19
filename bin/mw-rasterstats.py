@@ -45,7 +45,8 @@ def np_stats(data: np.ndarray, metric: str) -> np.ndarray:
 
 
 
-def calc_stats(rio_image, df_row, bands, metrics, buffer, ignore):
+def calc_stats(rio_image, df_row, bands, metrics, buffer, ignore,
+        rio_cloudmask=None, cloudmask_values=(1.0,), cloudmask_band=1):
     geom = df_row.geometry
     if buffer:
         geom = geom.buffer(buffer)
@@ -89,6 +90,16 @@ def calc_stats(rio_image, df_row, bands, metrics, buffer, ignore):
             for val in ignore:
                 data[data == val] = np.nan
 
+            if rio_cloudmask is not None:
+                res_m = rio_cloudmask.res[0]
+                mask_win = windows.Window(
+                    col_off=int(round((adj_xmin - rio_cloudmask.bounds.left) / res_m)),
+                    row_off=int(round((rio_cloudmask.bounds.top - adj_ymax) / res_m)),
+                    width=geom_mask.shape[1], height=geom_mask.shape[0])
+                cloud = rio_cloudmask.read(cloudmask_band, window=mask_win,
+                    boundless=True, fill_value=0)
+                data[:, ~np.isin(cloud, cloudmask_values)] = np.nan
+
     results = np_stats(data, metrics)
     
     # import matplotlib.pyplot as plt
@@ -102,16 +113,23 @@ def calc_stats(rio_image, df_row, bands, metrics, buffer, ignore):
 
 
 def calculate_raster_stats(inputvector, raster, outputvector, metrics, prefix,
-        bands, bandnames, out_format, buffer, ignore):
+        bands, bandnames, out_format, buffer, ignore,
+        cloudmask=None, cloudmaskvalues=(1.0,), cloudmaskband=1):
     gdf = gpd.read_file(inputvector)
     rio_image = rio.open(raster, 'r')
 
-    
+    rio_cloudmask = None
+    if cloudmask is not None:
+        rio_cloudmask = rio.open(cloudmask, 'r')
+        if rio_cloudmask.res[0] != rio_image.res[0]:
+            raise Exception('--cloudmask must have the same resolution as the raster')
+
     column_names = [(f"{prefix[i]}_" if len(prefix[i]) > 0 else '') + b + ('_' if len(bandnames) > 0 else '') + stat for stat in metrics for i, b in enumerate(bandnames)]
     # calc_stats(rio_image, gdf.iloc[0], bands, stats)
 
     for i, row in tqdm(gdf.iterrows(), total=len(gdf)):
-        gdf.loc[i, column_names] = calc_stats(rio_image, row, bands, metrics, buffer, ignore)
+        gdf.loc[i, column_names] = calc_stats(rio_image, row, bands, metrics,
+            buffer, ignore, rio_cloudmask, cloudmaskvalues, cloudmaskband)
 
     gdf.to_file(outputvector, driver=out_format)
 
@@ -135,8 +153,16 @@ if __name__ == "__main__":
         help="Output vector format")
     parser.add_argument("--buffer", type=float, default=0., 
         help="Buffer radius of vector features")
-    parser.add_argument("--ignore", nargs='*', type=float, default=[0.], 
+    parser.add_argument("--ignore", nargs='*', type=float, default=[0.],
         help="Values to ignore during metric calculation")
+    parser.add_argument("--cloudmask", type=str, default=None,
+        help="Optional mask raster on the same grid as 'raster'. Pixels whose "
+             "mask value is not in --cloudmaskvalues are excluded (NaN) before "
+             "stats. Pixels outside the mask extent count as mask value 0.")
+    parser.add_argument("--cloudmaskvalues", nargs='*', type=float, default=[1.0],
+        help="Mask values treated as VALID (kept). Default: 1")
+    parser.add_argument("--cloudmaskband", type=int, default=1,
+        help="Band of --cloudmask to use. Default: 1")
     args = parser.parse_args()
 
     if len(args.bands) > 1:
@@ -164,7 +190,10 @@ if __name__ == "__main__":
         bandnames=args.bandnames, 
         out_format=args.format, 
         buffer=args.buffer,
-        ignore=args.ignore
+        ignore=args.ignore,
+        cloudmask=args.cloudmask,
+        cloudmaskvalues=args.cloudmaskvalues,
+        cloudmaskband=args.cloudmaskband
     )
 
 # python rasterstats.py /nesi/project/landcare03178/data/experiments/trees-wairarapa/model_detectron2/prediction_gwrc_RGB_2021_wairarapa_2.gpkg /nesi/project/landcare03178/data/experiments/wairarapa-species/model_smp_unet64_f1_jaccard/prediction_gwrc_RGBI_2021_wairarapa_2.kea /nesi/project/landcare03178/data/experiments/trees-wairarapa/model_detectron2/prediction_gwrc_RGB_2021_wairarapa_2_species.gpkg --metrics mode --bands 1 --bandnames CLASS --buffer 0  
